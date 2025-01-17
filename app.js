@@ -3,7 +3,8 @@ const logger = require("./utlis/logger");
 const authRouter = require("./routers/authRout");
 const errorPage = require("./utlis/errorPage");
 const cors = require("cors");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const eventRout = require("./routers/eventRouters");
 
 const app = express();
 app.use(express.json());
@@ -14,8 +15,9 @@ app.use(cors(
     }
 ))
 app.use(cookieParser())
-app.use(logger) 
-app.use("/auth", authRouter);
+app.use(logger)
+app.use("/v1/auth", authRouter);
+app.use("/v1/event", eventRout)
 
 app.use(errorPage);
 module.exports = app;

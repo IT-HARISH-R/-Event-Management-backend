@@ -124,16 +124,16 @@ const userController = {
     },
     me: async (request, response) => {
 
-        const userid = request.user_id.id
+        const {user_id} = request
         try {
 
-            const user = await User.findById(userid);
+            const user = await User.findById(user_id.id);
 
-            if(!user){
+            if (!user) {
                 return response.status(404).json({ message: "user not found" });
             }
 
-            response.json({user})
+            response.json({ user })
         }
         catch (error) {
             response.status(500).json({ message: error.message });
