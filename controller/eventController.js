@@ -1,16 +1,33 @@
 const Event = require("../models/eventModul")
 
 const eventColtroller = {
-    createEvent: async (req, res) => {
+    createEvent: async (req, res) => async (req, res) => {
         try {
-            const { title, description, date, time, location, ticketPrice, category, images, videos } = req.body;
-            const organizer = req.user_id.id; // Assume authentication middleware is used
-            const event = new Event({ title, description, date, time, location, ticketPrice, category, images, videos, organizer });
-            await event.save();
-            res.status(201).json(event);
-        }
-        catch (error) {
-            res.status(500).json({ error: error.message });
+            const { title, description, date, time, location, ticketPrice, category, organizer } = req.body;
+console.log("comeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+            // Prepare URLs or file paths for uploaded images and videos
+            const images = req.files.images ? req.files.images.map(file => file.path) : [];
+            const videos = req.files.videos ? req.files.videos.map(file => file.path) : [];
+
+            // Create the event in the database
+            const newEvent = new Event({
+                title,
+                description,
+                date,
+                time,
+                location,
+                ticketPrice,
+                category,
+                images,  // Save file paths of images
+                videos,  // Save file paths of videos
+                organizer
+            });
+
+            const savedEvent = await newEvent.save();
+            res.status(200).json({ message: 'Event created successfully', event: savedEvent });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Server error', error: error.message });
         }
     },
     search: async (req, res) => {

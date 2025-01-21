@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { SECRET_KEY, EMAIL, PASS } = require('../utlis/config')
 const nodemailer = require('nodemailer');
-const { request } = require('../app');
 
 
 const userController = {
@@ -22,7 +21,7 @@ const userController = {
             }
 
             const passwordhash = await bcrypt.hash(password, 10)
-            const newuser = new User({
+            const newuser = new User({ 
                 username,
                 email,
                 password: passwordhash,

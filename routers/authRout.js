@@ -8,7 +8,7 @@ authRouter.post("/sing", userController.register);
 authRouter.post("/login", userController.login);
 authRouter.post("/Forgot-Password", userController.ForgotPassword);
 authRouter.post("/reset-password/:token", userController.resetPassword);
-authRouter.get("/me", auth.checkAuth,userController.me);
+authRouter.get("/profile", auth.checkAuth,userController.me);
 
 
 module.exports = authRouter;  
