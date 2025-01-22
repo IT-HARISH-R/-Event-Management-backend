@@ -1,18 +1,31 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+// Ensure directory existence
+const ensureDirectoryExistence = (filePath) => {
+    if (!fs.existsSync(filePath)) {
+        fs.mkdirSync(filePath, { recursive: true });
+    }
+};
 
 // Storage configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // Specify where to save uploaded files (e.g., "uploads/images" and "uploads/videos")
+        let uploadPath;
+
         if (file.mimetype.startsWith('image')) {
-            cb(null, '../uploads/images');
+            uploadPath = path.resolve(__dirname, '../uploads/images');
         } else if (file.mimetype.startsWith('video')) {
-            cb(null, '../uploads/videos');
+            uploadPath = path.resolve(__dirname, '../uploads/videos');
         } else {
-            cb(new Error('Invalid file type'), false);
+            return cb(new Error('Invalid file type'), false);
         }
-        console.log("------------end")
+
+        // Ensure the upload path exists
+        ensureDirectoryExistence(uploadPath);
+
+        cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
         // Save file with a unique name

@@ -1,15 +1,18 @@
 const Event = require("../models/eventModul")
 
 const eventColtroller = {
-    createEvent: async (req, res) => async (req, res) => {
+    createEvent: async (req, res) => {
         try {
-            const { title, description, date, time, location, ticketPrice, category, organizer } = req.body;
-console.log("comeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-            // Prepare URLs or file paths for uploaded images and videos
-            const images = req.files.images ? req.files.images.map(file => file.path) : [];
-            const videos = req.files.videos ? req.files.videos.map(file => file.path) : [];
+            console.log("Request Files:", req.files); // Check files
+            console.log("Request Body:", req.body);   // Check other fields
 
-            // Create the event in the database
+            const { title, description, date, time, location, ticketPrice, category, organizer } = req.body;
+
+            // Handle files
+            const images = req.files?.images ? req.files.images.map(file => file.path) : [];
+            const videos = req.files?.videos ? req.files.videos.map(file => file.path) : [];
+
+            // Save event to DB
             const newEvent = new Event({
                 title,
                 description,
@@ -18,15 +21,15 @@ console.log("comeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
                 location,
                 ticketPrice,
                 category,
-                images,  // Save file paths of images
-                videos,  // Save file paths of videos
+                images,
+                videos,
                 organizer
             });
 
             const savedEvent = await newEvent.save();
             res.status(200).json({ message: 'Event created successfully', event: savedEvent });
         } catch (error) {
-            console.error(error);
+            console.error("Error creating event:", error);
             res.status(500).json({ message: 'Server error', error: error.message });
         }
     },
@@ -35,9 +38,9 @@ console.log("comeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
             const { search, dateFrom, dateTo, location, category, minPrice, maxPrice } = req.query;
 
             const filters = {};
-            if (search) filters.title = new RegExp(search, 'i'); // Case-insensitive search
+            if (search) filters.title = new RegExp(search, 'i');
             if (dateFrom || dateTo) filters.date = { ...(dateFrom && { $gte: dateFrom }), ...(dateTo && { $lte: dateTo }) };
-            if (location) filters.location = new RegExp(location, 'i'); // Case-insensitive
+            if (location) filters.location = new RegExp(location, 'i');
             if (category) filters.category = category;
             if (minPrice || maxPrice) filters.ticketPrice = { ...(minPrice && { $gte: minPrice }), ...(maxPrice && { $lte: maxPrice }) };
 
