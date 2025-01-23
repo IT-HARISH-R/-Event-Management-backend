@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path"); 
 const logger = require("./utlis/logger");
 const authRouter = require("./routers/authRout");
 const errorPage = require("./utlis/errorPage");
@@ -16,6 +17,7 @@ app.use(cors(
         methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     }
 ))
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cookieParser())
 app.use(logger)
 app.use("/api/v1/auth", authRouter);

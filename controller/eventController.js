@@ -7,8 +7,9 @@ const eventColtroller = {
             console.log("Request Body:", req.body);   // Check other fields
 
             const { title, description, date, time, location, ticketPrice, category, organizer } = req.body;
-
+            const userid = req.userId
             // Handle files
+            console.log(userid)
             const images = req.files?.images ? req.files.images.map(file => file.path) : [];
             const videos = req.files?.videos ? req.files.videos.map(file => file.path) : [];
 
@@ -23,7 +24,7 @@ const eventColtroller = {
                 category,
                 images,
                 videos,
-                organizer
+                organizer:userid
             });
 
             const savedEvent = await newEvent.save();
@@ -48,6 +49,23 @@ const eventColtroller = {
             res.json(events);
         } catch (error) {
             res.status(500).json({ error: error.message });
+        }
+    },
+    getAll: async (req, res) => {
+        try {
+            const events = await Event.find();
+            // Map through events to modify image paths
+            const updatedEvents = events.map(event => {
+                event.images = event.images.map(imagePath =>
+                    imagePath.replace(/^.*uploads[\\/]/, 'uploads/')
+                );
+                return event;
+            });
+    
+            res.json(updatedEvents);
+        } catch (error) {
+            console.error("Error fetching events:", error);
+            res.status(500).json({ message: 'Server error', error: error.message });
         }
     }
 }
