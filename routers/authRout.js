@@ -1,14 +1,22 @@
-const express = require("express");
-const userController = require("../controller/userController");
-const auth = require("../middlewares/auth");
+const express = require('express');
+const userController = require('../controller/userController.js');
+const auth = require('../middlewares/auth.js');
 
-const authRouter = express.Router();
+const userRoutes = express.Router();
 
-authRouter.post("/sing", userController.register);
-authRouter.post("/login", userController.login);
-authRouter.post("/Forgot-Password", userController.ForgotPassword);
-authRouter.post("/reset-password/:token", userController.resetPassword);
-authRouter.get("/profile", auth.checkAuth,userController.me);
+// User registration
+userRoutes.post('/register', userController.register);
 
+// User login
+userRoutes.post('/login', userController.login);
 
-module.exports = authRouter;  
+// Get user profile (requires authentication)
+
+userRoutes.get('/profile',auth.checkAuth, userController.me);
+
+// Update user profile (requires authentication)
+
+// Delete user account (requires authentication)
+// userRoutes.delete('/profile', authenticate, deleteUser);
+
+module.exports = userRoutes;

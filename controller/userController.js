@@ -1,7 +1,7 @@
 const User = require('../models/userModels');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { SECRET_KEY, EMAIL, PASS } = require('../utlis/config')
+const { EMAIL, PASS, SECRET_KEY } = require('../utlis/config')
 const nodemailer = require('nodemailer');
 
 
@@ -21,7 +21,7 @@ const userController = {
             }
 
             const passwordhash = await bcrypt.hash(password, 10)
-            const newuser = new User({ 
+            const newuser = new User({
                 username,
                 email,
                 password: passwordhash,
@@ -42,34 +42,43 @@ const userController = {
             });
         }
     },
-    login: async (request, response) => {
+    login: async (req, res) => {
         try {
+            const { email, password } = req.body;
 
-            const { email, password } = request.body;
-
-            const user = await User.findOne({ email })
-
+            // Check if user exists
+            const user = await User.findOne({ email });
             if (!user) {
-                return response.json({ message: "Invalid  Email" });
-            }
-            if (!password) {
-                return response.json({ message: 'Password is required' });
+                return res.status(401).json({ message: 'Invalid Email' });
             }
 
-            const ismatch = await bcrypt.compare(password, user.password);
-            if (!ismatch) {
-                return response.json({ message: 'Invalid password' });
+            if (!password) {
+                return res.status(400).json({ message: 'Password is required' });
             }
-            const token = await jwt.sign(
+
+            // Compare the entered password with the hashed password
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.status(401).json({ message: 'Invalid password' });
+            }
+
+            // Generate JWT token
+            const token = jwt.sign(
                 { id: user._id },
                 SECRET_KEY,
                 { expiresIn: '1h' }
-            )
-            response.cookie('token', token, { httpOnly: true, maxAge: 360000 })
-            return response.json({ status: true, token, message: "logg in successfully" });
-        }
-        catch (error) {
-            response.status(500).json("error", error)
+            );
+            console.log("Generated Token:", token);
+
+            // Return the token in the response
+            return res.status(200).json({
+                status: true,
+                token: `Bearer ${token}`,
+                message: 'Logged in successfully'
+            });
+        } catch (error) {
+            console.error("Login Error:", error);
+            res.status(500).json({ error: 'Internal Server Error' });
         }
     },
     ForgotPassword: async (request, response) => {
@@ -122,12 +131,10 @@ const userController = {
         }
     },
     me: async (request, response) => {
-
-        const {user_id} = request
         try {
-
-            const user = await User.findById(user_id.id);
-
+            const userid = request.userId
+            const user = await User.findById(userid);
+            console.log(user)
             if (!user) {
                 return response.status(404).json({ message: "user not found" });
             }

@@ -1,20 +1,44 @@
 const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = require("../utlis/config");
 const upload = require("./upload");
-
+const User = require("../models/userModels")
 const auth = {
-    checkAuth: (request, response, next) => {
-        const token = request.cookies?.token; // Ensure cookies exist
-        if (!token) {
-            return response.status(401).json({ message: 'Unauthorized: Token missing' });
-        }
+    checkAuth: async (req, res, next) => {
         try {
+            // Extract token from Authorization header
+            const authHeader = req.headers.authorization;
+            console.log("-----------------------", req.headers.authorization)
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                return res.status(401).json({ msg: 'No token, authorization denied' });
+            }
+            // Get the token part of the header
+            const token = authHeader.split(' ')[2]; // Extract the actual token
+            console.log("...............................",token)
+            if (!token) {
+                return res.status(401).json({ msg: 'Invalid token format' });
+            }
+
+            console.log("Token from Authorization header:", token);
+
+            // Verify the token
             const decoded = jwt.verify(token, SECRET_KEY);
-            request.user = decoded; // Attach decoded token to request
-        } catch (err) {
-            return response.status(500).json({ message: 'Invalid token: ' + err.message });
+            console.log("Decoded Token:", decoded);
+
+            // Find the user by ID
+            const user = await User.findById(decoded.id);
+            if (!user) {
+                return res.status(401).json({ msg: 'User not found' });
+            }
+
+            console.log("Authenticated User:", user);
+
+            // Attach the user ID to the request object
+            req.userId = decoded.id;
+            next(); // Proceed to the next middleware or route handler
+        } catch (error) {
+            console.error("Authentication Error:", error);
+            res.status(401).json({ msg: 'Invalid or expired token' });
         }
-        next();
     },
     handleUpload: (req, res, next) => {
         upload(req, res, (err) => {
