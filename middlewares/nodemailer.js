@@ -1,19 +1,27 @@
 const nodemailer = require('nodemailer');
+const { EMAIL, PASS } = require('../utlis/config');
 
 const sendEmailConfirmation = (email, order) => {
+
+  // console.log("email", email)
+  // console.log("order", order)
   const transporter = nodemailer.createTransport({
+
     service: 'gmail',
     auth: {
-      user: 'your-email@gmail.com',
-      pass: 'your-email-password'
+      user: EMAIL,
+      pass: PASS
     }
   });
 
   const mailOptions = {
-    from: 'your-email@gmail.com',
-    to: email,
+    from: EMAIL,
+    to: email.email,
     subject: 'Ticket Purchase Confirmation',
-    text: `Your payment for ${order.ticketType} tickets has been successfully completed. Your total is ₹${order.totalAmount}.`
+    text: `Hello ${email.username},
+      Your payment for ${order.ticketType} tickets has been successfully completed. 
+      Ticket count: ${order.quantity}.
+      Your total is ₹${order.totalAmount}.`
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
@@ -24,3 +32,5 @@ const sendEmailConfirmation = (email, order) => {
     }
   });
 };
+
+module.exports = sendEmailConfirmation;

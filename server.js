@@ -11,5 +11,4 @@ mongoose.connect(MONGODB_URL)
     })
     .catch((error) => {
         console.log(error)
-        console.log(mongobd_url)
     })

@@ -7,6 +7,6 @@ const ticketRoutes = express.Router();
 ticketRoutes.post('/create', auth.checkAuth, createOrder);  // Ensure the correct middleware and controller method are called
 
 // Route to handle payment success from Razorpay
-ticketRoutes.post('/handlePaymentSuccess', handlePaymentSuccess);  // Controller method for handling payment success
+ticketRoutes.post('/handlePaymentSuccess', auth.checkAuth,handlePaymentSuccess);  // Controller method for handling payment success
 
 module.exports = ticketRoutes;
