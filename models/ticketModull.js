@@ -1,19 +1,24 @@
+// models/Ticket.js
 const mongoose = require('mongoose');
 
 const TicketSchema = new mongoose.Schema({
   eventId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event',  // reference to the Event model (assumes you have an Event schema)
+    ref: 'Event',
     required: true,
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',  // reference to the User model (assumes you have a User schema)
+    ref: 'User',
+    required: true,
+  },
+  orderId: {
+    type: String, // Razorpay order ID should be a string
     required: true,
   },
   ticketType: {
     type: String,
-    enum: ['General Admission', 'VIP'], // You can expand this list as needed
+    enum: ['Regular', 'VIP'],
     required: true,
   },
   quantity: {
@@ -31,7 +36,14 @@ const TicketSchema = new mongoose.Schema({
     enum: ['Pending', 'Completed', 'Failed'],
     default: 'Pending',
   },
+  paymentMethod: {
+    type: String,  // Add payment method field
+    enum: ['Credit Card', 'PayPal', 'Razorpay'],  // Example methods
+  },
 }, { timestamps: true });
 
-const Ticket = mongoose.model('Ticket', TicketSchema, 'ticket');
+// Indexing for fast lookups
+TicketSchema.index({ eventId: 1, userId: 1 });
+
+const Ticket = mongoose.model('Ticket', TicketSchema);
 module.exports = Ticket;

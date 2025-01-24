@@ -24,7 +24,7 @@ const eventColtroller = {
                 category,
                 images,
                 videos,
-                organizer:userid
+                organizer: userid
             });
 
             const savedEvent = await newEvent.save();
@@ -36,18 +36,39 @@ const eventColtroller = {
     },
     search: async (req, res) => {
         try {
-            const { search, dateFrom, dateTo, location, category, minPrice, maxPrice } = req.query;
+            // Destructure query parameters from the request
+            const { search, filterType } = req.query;  // Use req.query instead of req.body
+            console.log("Search Params: ", req.query);  // Log the search parameters for debugging
 
+            // Build the filters object
             const filters = {};
-            if (search) filters.title = new RegExp(search, 'i');
-            if (dateFrom || dateTo) filters.date = { ...(dateFrom && { $gte: dateFrom }), ...(dateTo && { $lte: dateTo }) };
-            if (location) filters.location = new RegExp(location, 'i');
-            if (category) filters.category = category;
-            if (minPrice || maxPrice) filters.ticketPrice = { ...(minPrice && { $gte: minPrice }), ...(maxPrice && { $lte: maxPrice }) };
 
-            const events = await Event.find(filters);
+            // Apply search filter based on filterType
+            if (search && filterType) {
+                if (filterType === 'category') {
+                    filters.category = new RegExp(search, 'i'); // Case-insensitive search for title
+                } else if (filterType === 'location') {
+                    filters.location = new RegExp(search, 'i'); // Case-insensitive search for location
+                } else if (filterType === 'date') {
+                    filters.date = new Date(search); // Assuming the date is in 'yyyy-mm-dd' format
+                } else if (filterType === 'price') {
+                    const priceRange = search.split('-');
+                    if (priceRange.length === 2) {
+                        filters.ticketPrice = {
+                            $gte: parseFloat(priceRange[0]), // Min price
+                            $lte: parseFloat(priceRange[1])  // Max price
+                        };
+                    }
+                }
+            }
+
+            // Fetch events based on filters
+            const events = await Event.find(filters).sort({ date: 1 }); // Sorting by date ascending
+
+            // Return the filtered events as a JSON response
             res.json(events);
         } catch (error) {
+            // Return a 500 status with the error message if something goes wrong
             res.status(500).json({ error: error.message });
         }
     },
@@ -61,13 +82,47 @@ const eventColtroller = {
                 );
                 return event;
             });
-    
+
             res.json(updatedEvents);
         } catch (error) {
             console.error("Error fetching events:", error);
             res.status(500).json({ message: 'Server error', error: error.message });
         }
+    },
+    getbyid: async (req, res) => {
+        try {
+            const id = req.params.id;
+            console.log(id);
+    
+            if (!id) {
+                return res.status(400).json({ message: "Invalid event ID" });
+            }
+    
+            const event = await Event.findById(id);
+    
+            if (!event) {
+                return res.status(404).json({ message: "Event not found" });
+            }
+    
+            // Update image paths
+            event.images = event.images.map(imagePath =>
+                imagePath.replace(/^.*uploads[\\/]/, 'uploads/')
+            );
+    
+            // Update video paths (assuming videos field exists)
+            event.videos = event.videos.map(videoPath =>
+                videoPath.replace(/^.*uploads[\\/]/, 'uploads/')
+            );
+    
+            console.log(event);
+            res.json(event);
+    
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
     }
+    
+    
 }
 
 

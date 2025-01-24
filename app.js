@@ -6,6 +6,7 @@ const errorPage = require("./utlis/errorPage");
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
 const eventRout = require("./routers/eventRouters");
+const ticketRoutes = require("./routers/ticketsRout");
 
 const app = express();
 
@@ -22,6 +23,8 @@ app.use(cookieParser())
 app.use(logger)
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/event", eventRout);
+app.use("/api/v1/ticket", ticketRoutes);
+
 // app.use("/tickets");
 
 app.use(errorPage);
