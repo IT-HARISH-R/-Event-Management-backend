@@ -18,7 +18,7 @@ const TicketSchema = new mongoose.Schema({
   },
   ticketType: {
     type: String,
-    enum: ['Regular', 'VIP'],
+    enum: ['General Admission', 'VIP'],
     required: true,
   },
   quantity: {

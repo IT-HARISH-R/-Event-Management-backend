@@ -3,37 +3,77 @@ const Event = require("../models/eventModul")
 const eventColtroller = {
     createEvent: async (req, res) => {
         try {
-            console.log("Request Files:", req.files); // Check files
-            console.log("Request Body:", req.body);   // Check other fields
+            // Log uploaded files and request body for debugging
+            console.log("Request Files:", req.files);
+            console.log("Request Body:", req.body);
+            console.log("-----------------------------------------1")
+    
+            const {
+                title,
+                description,
+                date,
+                time,
+                location,
+                ticketTypes, // This should be passed as an array of objects
+                category,
+            } = req.body;
+        console.log(ticketTypes)
+        console.log("-----------------------------------------2")
 
-            const { title, description, date, time, location, ticketPrice, category, organizer } = req.body;
-            const userid = req.userId
-            // Handle files
-            console.log(userid)
+            // Organizer ID (from middleware/user session)
+            const userId = req.userId;
+    
+            // File handling for images and videos
             const images = req.files?.images ? req.files.images.map(file => file.path) : [];
             const videos = req.files?.videos ? req.files.videos.map(file => file.path) : [];
+            console.log("-----------------------------------------3")
+    
+            // Parse ticketTypes (if sent as a stringified JSON array)
+            const parsedTicketTypes = typeof ticketTypes === 'string' ? JSON.parse(ticketTypes) : ticketTypes;
+            console.log("-----------------------------------------parsedTicketTypes",parsedTicketTypes)
+            console.log("-----------------------------------------5")
+    
+            // Validate required fields
+            if (!title || !description || !date || !time || !location || !parsedTicketTypes || !category) {
+                return res.status(400).json({ message: 'All fields are required' });
+            }
+            console.log("----------------------------------------6")
+    
+            // Validate ticketTypes array
+            if (!Array.isArray(parsedTicketTypes) || parsedTicketTypes.length === 0) {
+                return res.status(400).json({ message: 'At least one ticket type is required' });
+            }
+            console.log("----------------------------------------7-")
 
-            // Save event to DB
+            // Create a new event
             const newEvent = new Event({
                 title,
                 description,
                 date,
                 time,
                 location,
-                ticketPrice,
+                ticketTypes: parsedTicketTypes, // Store parsed ticket types
                 category,
                 images,
                 videos,
-                organizer: userid
+                organizer: userId, // Link to the organizer
             });
-
+            console.log("-----------------------------------------newevent ",newEvent)
+            console.log("-----------------------------------------8")
+    
+            // Save the event to the database
             const savedEvent = await newEvent.save();
+            console.log("-----------------------------------------9")
+    
             res.status(200).json({ message: 'Event created successfully', event: savedEvent });
         } catch (error) {
+            // Handle errors gracefully
             console.error("Error creating event:", error);
+            console.log("-----------------------------------------end")
+
             res.status(500).json({ message: 'Server error', error: error.message });
         }
-    },
+    },    
     search: async (req, res) => {
         try {
             const { search, filterType } = req.query; // Extract query parameters
@@ -144,74 +184,40 @@ const eventColtroller = {
 module.exports = eventColtroller
 
 
-
-// search: async (req, res) => {
+// createEvent: async (req, res) => {
 //     try {
-//         // Destructure query parameters from the request
-//         const { search, filterType } = req.query; // Use req.query instead of req.body
-//         console.log("Search Params:", req.query); // Debugging
+//         console.log("Request Files:", req.files); // Logs the uploaded files
+//         console.log("Request Body:", req.body);   // Logs the other fields (non-file fields)
 
-//         // Initialize the filters object
-//         const filters = {};
+//         const { title, description, date, time, location, ticketPrice, category, ticketType } = req.body;
+//         const userid = req.userId; 
+        
+//         const images = req.files?.images ? req.files.images.map(file => file.path) : [];
+//         const videos = req.files?.videos ? req.files.videos.map(file => file.path) : [];
 
-//         console.log("Applied Filters Before Processing:", filters); // Log filters before applying conditions
+//         console.log("Ticket Type:", ticketType);
 
-//         // Apply search filter based on filterType
-//         if (search && filterType) {
-//             if (filterType === 'category') {
-//                 filters.category = { $regex: new RegExp(`^${search}$`, 'i') };
-//                 console.log(filters.category,"-----------")
-//                 // Strict case-insensitive match
-//             } 
-//             else if (filterType === 'location') {
-//                 filters.location = { $regex: new RegExp(search, 'i') };
-//             }
-
-            
-//             else if (filterType === 'date') {
-//                 const date = new Date(search); // Assuming the input is in 'yyyy-mm-dd' format
-
-//                 // Get the first and last day of the month
-//                 const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-//                 const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-
-//                 // Filter events within the month
-//                 filters.date = {
-//                     $gte: startOfMonth, // Greater than or equal to the start of the month
-//                     $lte: endOfMonth    // Less than or equal to the end of the month
-//                 };
-//             }
-//             else if (filterType === 'price') {
-//                 const priceRange = search.split('-');
-//                 if (priceRange.length === 2) {
-//                     filters.ticketPrice = {
-//                         $gte: parseFloat(priceRange[0]), // Min price
-//                         // $lte: parseFloat(priceRange[1])  // Max price
-//                     };
-//                 }
-//             }
-//         }
-
-//         console.log("Applied Filters After Processing:", filters); // Log filters after applying conditions
-
-//         // if(!filters)
-
-//         // Fetch events based on filters
-//         const events = await Event.find(filters).sort({ date: 1 }); // Sorting by date ascending
-
-//         // Map through events to modify image paths
-//         const updatedEvents = events.map(event => {
-//             event.images = event.images.map(imagePath =>
-//                 imagePath.replace(/^.*uploads[\\/]/, 'uploads/')
-//             );
-//             return event;
+//         const newEvent = new Event({
+//             title,
+//             description,
+//             date,
+//             time,
+//             location,
+//             ticketPrice,
+//             category,
+//             images,
+//             videos,
+//             ticketType,
+//             organizer: userid, 
 //         });
 
+//         const savedEvent = await newEvent.save();
 
-//         // Return the filtered events as a JSON response
-//         res.json(updatedEvents);
+//         res.status(200).json({ message: 'Event created successfully', event: savedEvent });
+    
 //     } catch (error) {
-//         // Return a 500 status with the error message if something goes wrong
-//         console.error("Error in search:", error); // Log the error for debugging
-//         res.status(500).json({ error: error.message });
+//         // Catch and handle any errors that occur during event creation
+//         console.error("Error creating event:", error);
+//         res.status(500).json({ message: 'Server error', error: error.message });
 //     }
+// }

@@ -21,21 +21,11 @@ const EventSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // ticketPrice: {
-    //     type: Number,
-    //     required: true
-    // },
     ticketTypes: [
         {
-            type: String,  // e.g., 'General Admission', 'VIP'
-            price: {
-                type: Number,
-                required: true
-            },
-            quantity: {
-                type: Number,
-                required: true
-            }
+            type: { type: String, required: true },
+            price: { type: Number, required: true },
+            quantity: { type: Number, required: true },
         }
     ],
     category: {
@@ -44,15 +34,19 @@ const EventSchema = new mongoose.Schema({
     },
     images: {
         type: [String],
-        required: true  
+        required: true
     },
     videos: {
         type: [String],
-        required: true   
+        required: true
     },
+    candidates: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     organizer: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'organizer',
         required: true
     },
 }, { timestamps: true });

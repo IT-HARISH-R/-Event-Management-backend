@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 const Ticket = require('../models/ticketModull');
 const User = require("../models/userModels")
+const Event = require("../models/eventModul")
 const { KEY_ID, KEY_SECRET } = require('../utlis/config');
 const crypto = require('crypto');
 const sendEmailConfirmation = require('../middlewares/nodemailer');
@@ -68,15 +69,15 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ message: 'Error creating order, please try again later' });
   }
 };
-
 exports.handlePaymentSuccess = async (req, res) => {
   try {
-    const { paymentId, orderId, signature } = req.body;
+    const { paymentId, orderId, signature, event } = req.body;
+    console.log(req.body);
+    console.log("Event id: ", event);
 
     if (!paymentId || !orderId || !signature) {
       return res.status(400).json({ message: 'Missing payment details' });
     }
-
 
     // Find the ticket with the provided orderId
     const ticket = await Ticket.findOne({ orderId });
@@ -84,7 +85,6 @@ exports.handlePaymentSuccess = async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ message: 'Ticket not found' });
     }
-
 
     // Verify the Razorpay payment signature
     const body = orderId + "|" + paymentId;
@@ -94,18 +94,28 @@ exports.handlePaymentSuccess = async (req, res) => {
       .update(body.toString())
       .digest('hex');
 
-
     if (expectedSignature === signature) {
       // Payment verified successfully
       ticket.paymentStatus = 'Completed';
       ticket.paymentMethod = 'Razorpay'; // Optionally store the payment method
+
       const userId = req.userId;
-      const user = await User.findById(userId)
+      const user = await User.findById(userId);
 
-      sendEmailConfirmation(user, ticket)
+      // Add the user to the event's list of candidates/participants
+      const updatedEvent = await Event.findByIdAndUpdate(
+        event,
+        { $push: { candidates: user._id } }, // Add the user to the event's candidates array
+        { new: true }
+      );
 
+      // Send email confirmation to the user
+      sendEmailConfirmation(user, ticket);
+
+      // Save the updated ticket
       await ticket.save();
-      res.json({ message: 'Payment Successful and Ticket Booked!' });
+
+      res.json({ message: 'Payment Successful and Ticket Booked!', event: updatedEvent });
     } else {
       // Payment verification failed
       ticket.paymentStatus = 'Failed';
@@ -116,5 +126,14 @@ exports.handlePaymentSuccess = async (req, res) => {
     console.error('Error handling payment success:', error);
     res.status(500).json({ message: 'Error handling payment, please try again later' });
   }
-
 };
+
+
+
+
+
+
+
+
+
+
