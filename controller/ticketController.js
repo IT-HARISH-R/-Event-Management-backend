@@ -56,10 +56,6 @@ exports.createOrder = async (req, res) => {
     });
 
     await ticket.save();
-
-
-
-
     res.json({
       orderId: order.id,
       amount: order.amount,
@@ -100,6 +96,11 @@ exports.handlePaymentSuccess = async (req, res) => {
       ticket.paymentMethod = 'Razorpay'; // Optionally store the payment method
 
       const userId = req.userId;
+      const updateuser = await User.findByIdAndUpdate(  //ticketId
+        userId,
+        { $push: { ticketId: ticket._id } }, // Add the user to the event's candidates array
+        { new: true }
+      )
       const user = await User.findById(userId);
 
       // Add the user to the event's list of candidates/participants
@@ -125,6 +126,77 @@ exports.handlePaymentSuccess = async (req, res) => {
   } catch (error) {
     console.error('Error handling payment success:', error);
     res.status(500).json({ message: 'Error handling payment, please try again later' });
+  }
+};
+
+exports.getTicketbyId = async (req, res) => {
+  try {
+    const eventid = req.params.id;
+    console.log("-----------------",eventid)
+    
+    const ticket = await Ticket.findById(eventid);
+    console.log("-----------------",ticket)
+    console.log("-----------------",eventid)
+
+    res.json(ticket)
+
+  }
+  catch (err) {
+    console.log("-----------------err",req.params)
+    res.status(500).json({ message: 'Error handling Get by id', err });
+  }
+}
+
+
+// Ticket Cancellation
+exports.deleteTicketById = async (req, res) => {
+  try {
+    const ticketId = req.params.id; // Assuming the ID comes from the route
+console.log( "_---------------",req.params.id)
+    // Attempt to find and delete the ticket by ID
+    const ticket = await Ticket.findByIdAndDelete(ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
+
+    res.json({ message: "Ticket deleted successfully", ticket });
+  } catch (err) {
+    console.log("Error:", err);
+    res.status(500).json({ message: "Error handling ticket deletion", err });
+  }
+};
+
+// Ticket Transfer
+exports.transferTicket = async (req, res) => {
+  try {
+    const { ticketId, newAttendeeEmail } = req.body;
+
+    // Find the ticket to be transferred
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
+
+    // Find the new attendee by email
+    const newAttendee = await User.findOne({ email: newAttendeeEmail });
+    if (!newAttendee) {
+      return res.status(404).json({ message: "New attendee not found" });
+    }
+
+    // Update the ticket's user ID to the new attendee's ID
+    ticket.userId = newAttendee._id;
+    await ticket.save();
+
+    // Optionally, notify the original and new attendee
+    const originalUser = await User.findById(ticket.previousUserId);
+    sendEmailConfirmation(originalUser, 'Ticket Transfer', `Your ticket for ${ticket.eventTitle} has been transferred.`);
+    sendEmailConfirmation(newAttendee, 'Ticket Transfer', `You have been transferred a ticket for ${ticket.eventTitle}.`);
+
+    res.json({ message: "Ticket transferred successfully" });
+  } catch (error) {
+    console.error('Error transferring ticket:', error);
+    res.status(500).json({ message: "Error transferring ticket" });
   }
 };
 

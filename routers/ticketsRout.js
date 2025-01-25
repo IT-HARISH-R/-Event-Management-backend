@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, handlePaymentSuccess } = require('../controller/ticketController');  // Import controller methods
+const { createOrder, handlePaymentSuccess, getTicketbyId, deleteTicketById } = require('../controller/ticketController');  // Import controller methods
 const auth = require('../middlewares/auth');
 const ticketRoutes = express.Router();
 
@@ -8,5 +8,7 @@ ticketRoutes.post('/create', auth.checkAuth, createOrder);  // Ensure the correc
 
 // Route to handle payment success from Razorpay
 ticketRoutes.post('/handlePaymentSuccess', auth.checkAuth,handlePaymentSuccess);  // Controller method for handling payment success
+ticketRoutes.get('/getTicketbyId/:id', auth.checkAuth,getTicketbyId);  // Controller method for handling payment success
+ticketRoutes.delete('/cancel/:id', auth.checkAuth,deleteTicketById);  // Controller method for handling payment success
 
 module.exports = ticketRoutes;

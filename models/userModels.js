@@ -17,7 +17,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['user', 'organizers', 'admin'],
         default: 'user'
-    }
+    },
+    ticketId: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }],
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema, "user");
