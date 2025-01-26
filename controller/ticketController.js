@@ -132,17 +132,17 @@ exports.handlePaymentSuccess = async (req, res) => {
 exports.getTicketbyId = async (req, res) => {
   try {
     const eventid = req.params.id;
-    console.log("-----------------",eventid)
-    
+    console.log("-----------------", eventid)
+
     const ticket = await Ticket.findById(eventid);
-    console.log("-----------------",ticket)
-    console.log("-----------------",eventid)
+    console.log("-----------------", ticket)
+    console.log("-----------------", eventid)
 
     res.json(ticket)
 
   }
   catch (err) {
-    console.log("-----------------err",req.params)
+    console.log("-----------------err", req.params)
     res.status(500).json({ message: 'Error handling Get by id', err });
   }
 }
@@ -151,13 +151,38 @@ exports.getTicketbyId = async (req, res) => {
 // Ticket Cancellation
 exports.deleteTicketById = async (req, res) => {
   try {
-    const ticketId = req.params.id; // Assuming the ID comes from the route
-console.log( "_---------------",req.params.id)
-    // Attempt to find and delete the ticket by ID
-    const ticket = await Ticket.findByIdAndDelete(ticketId);
+    const ticketId = req.params.id; // Ticket ID from route parameters
+    const userId = req.userId; // Assuming userId is available in the request object
 
+    // Find and delete the ticket by ID
+    const ticketdata = await Ticket.findById(ticketId);
+    const event = await Event.findOne(ticketdata.eventId)
+    console.log(event)
+    const eventIndex = event.candidates.indexOf(userId);
+    if (eventIndex > -1) {
+      event.candidates.splice(eventIndex, 1); // Remove the ticketId from the array
+      await event.save(); // Save the updated user document
+    } else {
+      return res.status(404).json({ message: "Ticket ID not found in user's data" });
+    }
+    const ticket = await Ticket.findByIdAndDelete(ticketId);
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
+    }
+
+    // Find the user and remove the first match of ticketId from the user's ticketId array
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Remove the first occurrence of ticketId
+    const ticketIndex = user.ticketId.indexOf(ticketId);
+    if (ticketIndex > -1) {
+      user.ticketId.splice(ticketIndex, 1); // Remove the ticketId from the array
+      await user.save(); // Save the updated user document
+    } else {
+      return res.status(404).json({ message: "Ticket ID not found in user's data" });
     }
 
     res.json({ message: "Ticket deleted successfully", ticket });
@@ -167,15 +192,28 @@ console.log( "_---------------",req.params.id)
   }
 };
 
-// Ticket Transfer
 exports.transferTicket = async (req, res) => {
   try {
     const { ticketId, newAttendeeEmail } = req.body;
+    const userId = req.userId; // Old user's ID from request
+
+    console.log("Ticket ID and New Attendee Email: ", ticketId, newAttendeeEmail);
 
     // Find the ticket to be transferred
     const ticket = await Ticket.findById(ticketId);
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
+    }
+
+    // Find the old user by their userId
+    const oldUser = await User.findById(userId);
+    if (!oldUser) {
+      return res.status(404).json({ message: "Old user not found" });
+    }
+
+    // Ensure the old user's ticketId array contains the ticket
+    if (!oldUser.ticketId.includes(ticketId)) {
+      return res.status(400).json({ message: "Old user does not own this ticket" });
     }
 
     // Find the new attendee by email
@@ -184,21 +222,169 @@ exports.transferTicket = async (req, res) => {
       return res.status(404).json({ message: "New attendee not found" });
     }
 
+    // Store the original user ID before updating
+    const originalUserId = ticket.userId;
+
     // Update the ticket's user ID to the new attendee's ID
     ticket.userId = newAttendee._id;
     await ticket.save();
 
-    // Optionally, notify the original and new attendee
-    const originalUser = await User.findById(ticket.previousUserId);
-    sendEmailConfirmation(originalUser, 'Ticket Transfer', `Your ticket for ${ticket.eventTitle} has been transferred.`);
-    sendEmailConfirmation(newAttendee, 'Ticket Transfer', `You have been transferred a ticket for ${ticket.eventTitle}.`);
+    // Update the event's candidates array
+    const event = await Event.findById(ticket.eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
 
-    res.json({ message: "Ticket transferred successfully" });
+    // Replace the original user ID with the new user ID in the candidates array
+    const candidateIndex = event.candidates.indexOf(originalUserId);
+    if (candidateIndex !== -1) {
+      event.candidates[candidateIndex] = newAttendee._id;
+      await event.save();
+    }
+
+    // Remove the ticket from the old user's ticketId array
+    oldUser.ticketId = oldUser.ticketId.filter(id => id.toString() !== ticketId.toString());
+    await oldUser.save();
+
+    // Add the ticket to the new attendee's ticketId array
+    if (!newAttendee.ticketId.includes(ticketId)) {
+      newAttendee.ticketId.push(ticket._id);
+      await newAttendee.save();
+    }
+
+    // Optionally, notify the original and new attendee
+    if (oldUser) {
+      sendEmailConfirmation(
+        oldUser,
+        'Ticket Transfer',
+        `Your ticket for ${ticket.eventTitle} has been transferred.`
+      );
+    }
+
+    sendEmailConfirmation(
+      newAttendee,
+      'Ticket Transfer',
+      `You have been transferred a ticket for ${ticket.eventTitle}.`
+    );
+
+    res.json({
+      message: "Ticket transferred successfully",
+      oldUser,
+      newAttendee,
+    });
   } catch (error) {
     console.error('Error transferring ticket:', error);
     res.status(500).json({ message: "Error transferring ticket" });
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Ticket Transfer
+// exports.transferTicket = async (req, res) => {
+//   try {
+//     const { ticketId, newAttendeeEmail } = req.body;
+//     console.log("------------------------------------", ticketId, newAttendeeEmail);
+
+//     // Find the ticket to be transferred
+//     const ticket = await Ticket.findById(ticketId);
+//     if (!ticket) {
+//       return res.status(404).json({ message: "Ticket not found" });
+//     }
+
+//     // Find the new attendee by email
+//     const newAttendee = await User.findOne({ email: newAttendeeEmail });
+//     if (!newAttendee) {
+//       return res.status(404).json({ message: "New attendee not found" });
+//     }
+
+//     // Store the original user ID before updating
+//     const originalUserId = ticket.userId;
+
+//     // Update the ticket's user ID to the new attendee's ID
+//     console.log(newAttendee)
+//     console.log("#######################")
+//     console.log(newAttendee._id)
+//     ticket.userId = newAttendee._id;
+//     console.log(ticket)
+//     console.log("#######################")
+//     await ticket.save();
+
+//     // Update the event's candidates array
+//     const event = await Event.findById(ticket.eventId);
+//     if (!event) {
+//       return res.status(404).json({ message: "Event not found" });
+//     }
+
+//     // Replace the original user ID with the new user ID in the candidates array
+//     const candidateIndex = event.candidates.indexOf(originalUserId);
+//     console.log(originalUserId)
+//     console.log("\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
+//     console.log(candidateIndex)
+//     if (candidateIndex !== -1) {
+//       console.log(event.candidates[candidateIndex])
+//       event.candidates[candidateIndex] = newAttendee._id;
+//       console.log(event.candidates[candidateIndex])
+//       await event.save();
+//     }
+
+//     // newAttendee.ticketId
+//     const updateuser = await User.findByIdAndUpdate(  //ticketId
+//       newAttendee._id,
+//       { $push: { ticketId: ticket._id } }, // Add the user to the event's candidates array
+//       { new: true }
+//     )
+
+//     // Optionally, notify the original and new attendee
+//     const originalUser = await User.findById(originalUserId);
+//     console.log("------------------------------------originalUser", originalUser);
+
+//     if (originalUser) {
+//       sendEmailConfirmation(
+//         originalUser,
+//         'Ticket Transfer',
+//         `Your ticket for ${ticket.eventTitle} has been transferred.`
+//       );
+//     }
+
+//     sendEmailConfirmation(
+//       newAttendee,
+//       'Ticket Transfer',
+//       `You have been transferred a ticket for ${ticket.eventTitle}.`
+//     );
+
+//     res.json({ message: "Ticket transferred successfully", updateuser });
+//   } catch (error) {
+//     console.error('Error transferring ticket:', error);
+//     res.status(500).json({ message: "Error transferring ticket" });
+//   }
+// };
+
+
+
+
 
 
 
