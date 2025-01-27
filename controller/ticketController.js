@@ -277,6 +277,20 @@ exports.transferTicket = async (req, res) => {
     res.status(500).json({ message: "Error transferring ticket" });
   }
 };
+exports.getbyorgid = async (req, res) => {
+  try {
+    // Fetch events directly by organizer ID
+    const newevent = await Event.find({ organizer: req.userId });
+
+    console.log("---------", req.userId);
+    console.log("---------", newevent);
+
+    res.json(newevent);
+  } catch (error) {
+    console.error("Error :", error);
+    res.status(500).json({ message: "Error fetching events." });
+  }
+};
 
 
 

@@ -144,6 +144,29 @@ const userController = {
         catch (error) {
             response.status(500).json({ message: error.message });
         }
+    },
+    getuserbyid: async (request, response) => {
+        try {
+            const { userid } = request.body;
+
+            // Validate userid
+            if (!userid) {
+                return response.status(400).json({ message: "Invalid user ID" });
+            }
+
+            // Fetch user from the database
+            const user = await User.findById(userid).select("-password"); // Exclude password
+            console.log(user);
+
+            if (!user) {
+                return response.status(404).json({ message: "User not found" });
+            }
+
+            response.json({ user });
+        } catch (error) {
+            console.error("Error fetching user by ID:", error);
+            response.status(500).json({ message: "Internal Server Error" });
+        }
     }
 
 }
