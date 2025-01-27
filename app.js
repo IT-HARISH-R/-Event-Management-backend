@@ -7,6 +7,7 @@ const cors = require("cors");
 const cookieParser = require('cookie-parser');
 const eventRout = require("./routers/eventRouters");
 const ticketRoutes = require("./routers/ticketsRout");
+const analyticsRoutes = require("./routers/analyticsRoutes");
 
 const app = express();
 
@@ -24,9 +25,10 @@ app.use(logger)
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/event", eventRout);
 app.use("/api/v1/ticket", ticketRoutes);
+app.use('/api/v1', analyticsRoutes);
 
 // app.use("/tickets");
 
-app.use(errorPage);
+app.use(errorPage); 
 module.exports = app;
 

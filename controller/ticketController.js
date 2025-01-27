@@ -292,6 +292,58 @@ exports.getbyorgid = async (req, res) => {
   }
 };
 
+exports.analytics = async (req, res) => {
+  async (req, res) => {
+    try {
+      // Fetch all ticket data
+      const tickets = await Ticket.find().populate("eventId");
+  
+      // Calculate analytics
+      const eventAnalytics = await Promise.all(
+        tickets.reduce((acc, ticket) => {
+          // Find the corresponding event
+          const event = ticket.eventId;
+  
+          // Create an entry for each event
+          if (!acc[event._id]) {
+            acc[event._id] = {
+              eventId: event._id,
+              title: event.title,
+              totalTicketsSold: 0,
+              revenue: 0,
+              paymentStatus: { Pending: 0, Completed: 0, Failed: 0 },
+              ticketTypes: {},
+            };
+          }
+  
+          // Aggregate ticket sales data
+          acc[event._id].totalTicketsSold += ticket.quantity;
+          acc[event._id].revenue += ticket.totalAmount;
+  
+          // Update payment status counts
+          acc[event._id].paymentStatus[ticket.paymentStatus] += 1;
+  
+          // Aggregate by ticket type
+          if (!acc[event._id].ticketTypes[ticket.ticketType]) {
+            acc[event._id].ticketTypes[ticket.ticketType] = 0;
+          }
+          acc[event._id].ticketTypes[ticket.ticketType] += ticket.quantity;
+  
+          return acc;
+        }, {})
+      );
+  
+      // Convert the object to an array
+      const result = Object.values(eventAnalytics);
+  
+      res.json(result);
+    } catch (err) {
+      console.error("Error fetching ticket analytics:", err);
+      res.status(500).json({ message: "Error fetching ticket analytics" });
+    }
+  }
+}
+
 
 
 

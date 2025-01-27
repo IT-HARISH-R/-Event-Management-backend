@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, handlePaymentSuccess, getTicketbyId, deleteTicketById, transferTicket, getbyorgid } = require('../controller/ticketController');  // Import controller methods
+const { createOrder, handlePaymentSuccess, getTicketbyId, deleteTicketById, transferTicket, getbyorgid, analytics } = require('../controller/ticketController');  // Import controller methods
 const auth = require('../middlewares/auth');
 const ticketRoutes = express.Router();
 
@@ -12,5 +12,6 @@ ticketRoutes.get('/getTicketbyId/:id', auth.checkAuth,getTicketbyId);  // Contro
 ticketRoutes.delete('/cancel/:id', auth.checkAuth,deleteTicketById);  // Controller method for handling payment success
 ticketRoutes.post('/transfer', auth.checkAuth,transferTicket);  // Controller method for handling payment success
 ticketRoutes.get('/getorgid', auth.checkAuth,getbyorgid);  // Controller method for handling payment success
+ticketRoutes.get('/analytics', auth.checkAuth,analytics);  // Controller method for handling payment success
 
 module.exports = ticketRoutes;
