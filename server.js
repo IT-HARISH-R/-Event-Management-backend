@@ -6,7 +6,7 @@ const port = PORT || 4000
 mongoose.connect(MONGODB_URL)
     .then(() => {
         console.log("Connecting database")
-        app.listen(port || 4000, () => {
+        app.listen(port, () => {
             console.log("server run");
         })
     })
