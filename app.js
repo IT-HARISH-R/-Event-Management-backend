@@ -8,8 +8,8 @@ const cookieParser = require('cookie-parser');
 const eventRout = require("./routers/eventRouters");
 const ticketRoutes = require("./routers/ticketsRout");
 const analyticsRoutes = require("./routers/analyticsRoutes");
-const scheduleRout = require("./routers/ScheduleRout");
 const adminRoutes = require("./routers/adminRoutes");
+const scheduleRout = require("./routers/ScheduleRout");
 
 const app = express();
 
