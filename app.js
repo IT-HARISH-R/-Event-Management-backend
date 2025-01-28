@@ -9,7 +9,7 @@ const eventRout = require("./routers/eventRouters");
 const ticketRoutes = require("./routers/ticketsRout");
 const analyticsRoutes = require("./routers/analyticsRoutes");
 const adminRoutes = require("./routers/adminRoutes");
-const scheduleRout = require("./routers/ScheduleRout");
+const scheduleRoute = require("./routers/ScheduleRout");
 
 const app = express();
 
@@ -28,7 +28,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/event", eventRout);
 app.use("/api/v1/ticket", ticketRoutes);
 app.use('/api/v1', analyticsRoutes);
-app.use('/api/v1', scheduleRout);
+app.use('/api/v1', scheduleRoute);
 app.use('/api/v1/admin', adminRoutes);
 
 // app.use("/tickets");
