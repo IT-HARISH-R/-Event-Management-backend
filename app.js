@@ -10,7 +10,7 @@ const ticketRoutes = require("./routers/ticketsRout");
 const analyticsRoutes = require("./routers/analyticsRoutes");
 const adminRoutes = require("./routers/adminRoutes");
 const scheduleRoute = require("./routers/ScheduleRout");
-
+  
 const app = express();
 
 app.use(express.json());
