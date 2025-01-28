@@ -13,7 +13,7 @@ const auth = {
             }
             // Get the token part of the header
             const token = authHeader.split(' ')[2]; // Extract the actual token
-            console.log("...............................",token)
+            console.log("...............................", token)
             if (!token) {
                 return res.status(401).json({ msg: 'Invalid token format' });
             }
@@ -48,6 +48,26 @@ const auth = {
             next(); // Proceed to the next middleware after upload
         });
     },
+    allowRoles: (roles) => {
+        return async (req, res, next) => {
+            // get the userId from the request object
+            const userId = req.userId;
+            const user = await User.findById(userId);
+
+            // check if the user exists
+            if (!user) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            // check if the user role is allowed
+            if (!roles.includes(user.role)) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
+            // proceed to the next middleware
+            next();
+        }
+    }
 };
 
 module.exports = auth;

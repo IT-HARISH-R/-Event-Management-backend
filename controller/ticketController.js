@@ -5,6 +5,7 @@ const Event = require("../models/eventModul")
 const { KEY_ID, KEY_SECRET } = require('../utlis/config');
 const crypto = require('crypto');
 const sendEmailConfirmation = require('../middlewares/nodemailer');
+const transferredsendEmail = require('../middlewares/nodemailer');
 
 const razorpayInstance = new Razorpay({
   key_id: KEY_ID,
@@ -137,7 +138,7 @@ exports.getTicketbyId = async (req, res) => {
     const ticket = await Ticket.findById(eventid);
     console.log("-----------------", ticket)
     console.log("-----------------", eventid)
-
+    console.log(ticket)
     res.json(ticket)
 
   }
@@ -252,19 +253,20 @@ exports.transferTicket = async (req, res) => {
       await newAttendee.save();
     }
 
+
+
     // Optionally, notify the original and new attendee
     if (oldUser) {
-      sendEmailConfirmation(
+      transferredsendEmail(
         oldUser,
         'Ticket Transfer',
-        `Your ticket for ${ticket.eventTitle} has been transferred.`
-      );
+        `Your ticket for ${event.title} has been transferred to ${newAttendee.username}.`);
     }
 
-    sendEmailConfirmation(
+    transferredsendEmail(
       newAttendee,
       'Ticket Transfer',
-      `You have been transferred a ticket for ${ticket.eventTitle}.`
+      `You have been transferred a ticket for ${event.title}.`
     );
 
     res.json({
@@ -297,13 +299,13 @@ exports.analytics = async (req, res) => {
     try {
       // Fetch all ticket data
       const tickets = await Ticket.find().populate("eventId");
-  
+
       // Calculate analytics
       const eventAnalytics = await Promise.all(
         tickets.reduce((acc, ticket) => {
           // Find the corresponding event
           const event = ticket.eventId;
-  
+
           // Create an entry for each event
           if (!acc[event._id]) {
             acc[event._id] = {
@@ -315,27 +317,27 @@ exports.analytics = async (req, res) => {
               ticketTypes: {},
             };
           }
-  
+
           // Aggregate ticket sales data
           acc[event._id].totalTicketsSold += ticket.quantity;
           acc[event._id].revenue += ticket.totalAmount;
-  
+
           // Update payment status counts
           acc[event._id].paymentStatus[ticket.paymentStatus] += 1;
-  
+
           // Aggregate by ticket type
           if (!acc[event._id].ticketTypes[ticket.ticketType]) {
             acc[event._id].ticketTypes[ticket.ticketType] = 0;
           }
           acc[event._id].ticketTypes[ticket.ticketType] += ticket.quantity;
-  
+
           return acc;
         }, {})
       );
-  
+
       // Convert the object to an array
       const result = Object.values(eventAnalytics);
-  
+
       res.json(result);
     } catch (err) {
       console.error("Error fetching ticket analytics:", err);

@@ -9,6 +9,7 @@ const eventRout = require("./routers/eventRouters");
 const ticketRoutes = require("./routers/ticketsRout");
 const analyticsRoutes = require("./routers/analyticsRoutes");
 const scheduleRout = require("./routers/ScheduleRout");
+const adminRoutes = require("./routers/adminRoutes");
 
 const app = express();
 
@@ -17,7 +18,7 @@ app.use(cors(
     {
         origin: 'http://localhost:5173',
         credentials: true,
-        methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+        methods: ['GET', 'POST', 'PATCH', 'DELETE' ,"PUT"],
     }
 ))
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -28,6 +29,7 @@ app.use("/api/v1/event", eventRout);
 app.use("/api/v1/ticket", ticketRoutes);
 app.use('/api/v1', analyticsRoutes);
 app.use('/api/v1', scheduleRout);
+app.use('/api/v1/admin', adminRoutes);
 
 // app.use("/tickets");
 

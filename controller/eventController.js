@@ -127,23 +127,32 @@ const eventColtroller = {
             res.status(500).json({ error: error.message }); // Return error message
         }
     },
-     getAll: async (req, res) => {
+    getAll: async (req, res) => {
         try {
             const events = await Event.find();
-            // Map through events to modify image paths
+            
+            // Filter and modify image paths
             const updatedEvents = events.map(event => {
+                // If approvalStatus is "Pending", return null
+                if (event.approvalStatus === 'Pending') {
+                    return null;
+                }
+    
+                // Update image paths for approved/rejected events
                 event.images = event.images.map(imagePath =>
                     imagePath.replace(/^.*uploads[\\/]/, 'uploads/')
                 );
+    
                 return event;
-            });
-
+            }).filter(event => event !== null); // Remove null values from the array
+    
             res.json(updatedEvents);
         } catch (error) {
             console.error("Error fetching events:", error);
             res.status(500).json({ message: 'Server error', error: error.message });
         }
     },
+    
     getbyid: async (req, res) => {
         try {
             const id = req.params.id;

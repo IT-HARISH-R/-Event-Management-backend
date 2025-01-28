@@ -11,8 +11,18 @@ const EventSchema = new mongoose.Schema({
     },
     date: {
         type: Date,
-        required: true
-    },
+        required: [true, 'Event date is required'],
+        validate: {
+          validator: function (value) {
+            return value >= new Date(); // Date must be in the future
+          },
+          message: 'Event date must be in the future',
+        },
+      },
+    // date: {
+    //     type: Date,
+    //     required: true
+    // },
     time: {
         type: String,
         required: true
@@ -23,10 +33,10 @@ const EventSchema = new mongoose.Schema({
     },
     ticketTypes: [
         {
-            type: { type: String, required: true },
-            price: { type: Number, required: true },
-            quantity: { type: Number, required: true },
-        }
+            type: { type: String, required: [true, 'Ticket type is required'] },
+            price: { type: Number, required: [true, 'Ticket price is required'] },
+            quantity: { type: Number, required: [true, 'Ticket quantity is required'] },
+        },
     ],
     category: {
         type: String,
@@ -49,6 +59,7 @@ const EventSchema = new mongoose.Schema({
         ref: 'organizer',
         required: true
     },
+    approvalStatus: { type: String, default: 'Pending' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Event', EventSchema, "event");
