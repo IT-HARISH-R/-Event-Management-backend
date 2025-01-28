@@ -112,7 +112,8 @@ exports.handlePaymentSuccess = async (req, res) => {
       );
 
       // Send email confirmation to the user
-      sendEmailConfirmation(user, ticket);
+      // sendEmailConfirmation(user, ticket);
+      transferredsendEmail(user, 'Ticket Booked Successful', `Hello ${updateuser.username}, your ticket has been successfully booked for the event: ${updatedEvent.title}.`)
 
       // Save the updated ticket
       await ticket.save();

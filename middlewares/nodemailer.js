@@ -23,7 +23,6 @@ const sendEmailConfirmation = (email, order) => {
       Ticket count: ${order.quantity}.
       Your total is ₹${order.totalAmount}.`
   };
-
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.log('Error sending email:', error);

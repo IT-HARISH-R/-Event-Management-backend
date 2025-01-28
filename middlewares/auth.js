@@ -52,8 +52,10 @@ const auth = {
         return async (req, res, next) => {
             // get the userId from the request object
             const userId = req.userId;
+            console.log(userId)
+            console.log(req.userId)
             const user = await User.findById(userId);
-
+            console.log(user)
             // check if the user exists
             if (!user) {
                 return res.status(401).json({ message: 'Unauthorized' });
