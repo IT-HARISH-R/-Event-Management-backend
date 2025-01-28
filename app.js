@@ -8,9 +8,9 @@ const cookieParser = require('cookie-parser');
 const eventRout = require("./routers/eventRouters");
 const ticketRoutes = require("./routers/ticketsRout");
 const analyticsRoutes = require("./routers/analyticsRoutes");
+const ScheduleRoute = require("./routers/scheduleRoute");
 const adminRoutes = require("./routers/adminRoutes");
-// const scheduleRoute = require("./routers/ScheduleRout");
-const ScheduleRoute = require("./routers/ScheduleRout");
+
   
 const app = express();
 
