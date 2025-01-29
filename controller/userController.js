@@ -101,7 +101,7 @@ const userController = {
                 from: 'youremail@gmail.com',
                 to: email,
                 subject: 'Reset Password',
-                text: `https://task12-password-reset.netlify.app/reset-password/${token}`
+                text: `http://localhost:5173/reset-password/${token}`
             };
 
             transporter.sendMail(mailOptions, function (error, info) {
