@@ -171,13 +171,11 @@ exports.createOrganizer = async (req, res) => {
 };
 exports.getalluser = async (req, res) => {
   try {
-  
+      const user = await User.find()
 
-    const user = await User.find()
+      const filteredUsers = user.filter(data => data.role !== 'admin');
 
-    console.log("New Organizer Created:", newUser);
-
-    res.json(user);
+    res.json(filteredUsers);
 
   } catch (error) {
     console.error("Error creating organizer:", error);
