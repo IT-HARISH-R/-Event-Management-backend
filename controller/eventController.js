@@ -1,50 +1,73 @@
 const Event = require("../models/eventModul")
-
+const cloudinary = require("../utlis/cloudinary")
 const eventColtroller = {
     createEvent: async (req, res) => {
         try {
             // Log uploaded files and request body for debugging
             console.log("Request Files:", req.files);
             console.log("Request Body:", req.body);
-            console.log("-----------------------------------------1")
+            console.log("-----------------------------------------1");
     
-            const {
-                title,
-                description,
-                date,
-                time,
-                location,
-                ticketTypes, // This should be passed as an array of objects
-                category,
-            } = req.body;
-        console.log(ticketTypes)
-        console.log("-----------------------------------------2")
-
+            const { title, description, date, time, location, ticketTypes, category } = req.body;
+            console.log(ticketTypes);
+            console.log("-----------------------------------------2");
+    
             // Organizer ID (from middleware/user session)
             const userId = req.userId;
     
             // File handling for images and videos
-            const images = req.files?.images ? req.files.images.map(file => file.path) : [];
-            const videos = req.files?.videos ? req.files.videos.map(file => file.path) : [];
-            console.log("-----------------------------------------3")
+            const images = req.files?.images ? req.files.images : [];
+            const videos = req.files?.videos ? req.files.videos.map(file => file.path) : []; // Path of the video files
+            console.log("-----------------------------------------3");
+    
+            // Upload images to Cloudinary
+            const imageUploads = await Promise.all(images.map(async (file) => {
+                const result = await cloudinary.uploader.upload(file.path, {
+                    folder: "uploads",
+                }).catch((error) => {
+                    console.log(error);
+                    throw new Error('Cloudinary upload failed');
+                });
+                return {
+                    public_id: result?.public_id,
+                    url: result?.secure_url,
+                };
+            }));
+    
+            // Handle videos (for example, uploading them to Cloudinary or storing the file paths)
+            const videoUploads = await Promise.all(videos.map(async (video) => {
+                // You can upload videos to Cloudinary (if needed) or simply save the path
+                const result = await cloudinary.uploader.upload(video, {
+                    folder: "uploads/videos",
+                    resource_type: "video", // This tells Cloudinary it's a video
+                }).catch((error) => {
+                    console.log(error);
+                    throw new Error('Cloudinary video upload failed');
+                });
+                return {
+                    public_id: result?.public_id,
+                    url: result?.secure_url, // Store the URL of the video
+                };
+            }));
     
             // Parse ticketTypes (if sent as a stringified JSON array)
             const parsedTicketTypes = typeof ticketTypes === 'string' ? JSON.parse(ticketTypes) : ticketTypes;
-            console.log("-----------------------------------------parsedTicketTypes",parsedTicketTypes)
-            console.log("-----------------------------------------5")
+            console.log("-----------------------------------------parsedTicketTypes", parsedTicketTypes);
+            console.log("-----------------------------------------5");
     
             // Validate required fields
             if (!title || !description || !date || !time || !location || !parsedTicketTypes || !category) {
                 return res.status(400).json({ message: 'All fields are required' });
             }
-            console.log("----------------------------------------6")
+            console.log("----------------------------------------6");
     
             // Validate ticketTypes array
             if (!Array.isArray(parsedTicketTypes) || parsedTicketTypes.length === 0) {
                 return res.status(400).json({ message: 'At least one ticket type is required' });
             }
-            console.log("----------------------------------------7-")
-
+            console.log("----------------------------------------7-");
+            console.log("----------------------------------------7-", imageUploads);
+    
             // Create a new event
             const newEvent = new Event({
                 title,
@@ -54,27 +77,111 @@ const eventColtroller = {
                 location,
                 ticketTypes: parsedTicketTypes, // Store parsed ticket types
                 category,
-                images,
-                videos,
+                images: imageUploads,  // Store all image URLs
+                videos: videoUploads,  // Store all video URLs
                 organizer: userId, // Link to the organizer
-                approvalStatus:'Pending'
+                approvalStatus: 'Pending',
             });
-            console.log("-----------------------------------------newevent ",newEvent)
-            console.log("-----------------------------------------8")
+            console.log("-----------------------------------------newevent ", newEvent);
+            console.log("-----------------------------------------8");
     
             // Save the event to the database
             const savedEvent = await newEvent.save();
-            console.log("-----------------------------------------9")
+            console.log("-----------------------------------------9");
     
-            res.status(200).json({ message: 'Event created successfully', event: savedEvent });
+            res.status(200).json({ message: 'Event created successfully', event: savedEvent, newEvent });
         } catch (error) {
             // Handle errors gracefully
             console.error("Error creating event:", error);
-            console.log("-----------------------------------------end")
-
+            console.log("-----------------------------------------end");
+    
             res.status(500).json({ message: 'Server error', error: error.message });
         }
-    },    
+    },
+   
+    // createEvent: async (req, res) => {
+    //     try {
+    //         // Log uploaded files and request body for debugging
+    //         console.log("Request Files:", req.files);
+    //         console.log("Request Body:", req.body);
+    //         console.log("-----------------------------------------1")
+    
+    //         const {
+    //             title,
+    //             description,
+    //             date,
+    //             time,
+    //             location,
+    //             ticketTypes, // This should be passed as an array of objects
+    //             category,
+    //         } = req.body;
+    //          console.log(ticketTypes)
+    //        console.log("-----------------------------------------2")
+
+           
+    //        // Organizer ID (from middleware/user session)
+    //        const userId = req.userId;
+           
+    //        // File handling for images and videos
+    //        const images = req.files?.images ? req.files.images.map(file => file.path) : [];
+    //        const videos = req.files?.videos ? req.files.videos.map(file => file.path) : [];
+    //        console.log("-----------------------------------------3")
+           
+    //        const result = await cloudinary.uploader.upload(images ,{
+    //         folder: "uploades",
+           
+    //        })
+    //         // Parse ticketTypes (if sent as a stringified JSON array)
+    //         const parsedTicketTypes = typeof ticketTypes === 'string' ? JSON.parse(ticketTypes) : ticketTypes;
+    //         console.log("-----------------------------------------parsedTicketTypes",parsedTicketTypes)
+    //         console.log("-----------------------------------------5")
+    
+    //         // Validate required fields
+    //         if (!title || !description || !date || !time || !location || !parsedTicketTypes || !category) {
+    //             return res.status(400).json({ message: 'All fields are required' });
+    //         }
+    //         console.log("----------------------------------------6")
+    
+    //         // Validate ticketTypes array
+    //         if (!Array.isArray(parsedTicketTypes) || parsedTicketTypes.length === 0) {
+    //             return res.status(400).json({ message: 'At least one ticket type is required' });
+    //         }
+    //         console.log("----------------------------------------7-")
+
+    //         // Create a new event
+    //         const newEvent = new Event({
+    //             title,
+    //             description,
+    //             date,
+    //             time,
+    //             location,
+    //             ticketTypes: parsedTicketTypes, // Store parsed ticket types
+    //             category,
+    //             images: {
+    //                 public_id: result.public_id,
+    //                 url: result.secure_url
+    //             },
+    //             videos,
+    //             organizer: userId, // Link to the organizer
+    //             approvalStatus:'Pending'
+    //         });
+    //         console.log("-----------------------------------------newevent ",newEvent)
+    //         console.log("-----------------------------------------8")
+    
+    //         // Save the event to the database
+    //         const savedEvent = await newEvent.save();
+    //         console.log("-----------------------------------------9")
+    
+    //         res.status(200).json({ message: 'Event created successfully', event: savedEvent });
+    //     } catch (error) {
+    //         // Handle errors gracefully
+    //         console.error("Error creating event:", error);
+    //         console.log("-----------------------------------------end")
+
+    //         res.status(500).json({ message: 'Server error', error: error.message });
+    //     }
+    // },    
+
     search: async (req, res) => {
         try {
             const { search, filterType } = req.query; // Extract query parameters
@@ -85,7 +192,7 @@ const eventColtroller = {
             console.log("Total Events Fetched:", events.length); // Debugging
     
             // Apply filtering based on filterType
-            if (search && filterType) {
+            if (search) {
                 events = events.filter((event) => {
                     switch (filterType) {
                         case 'category':
@@ -96,33 +203,25 @@ const eventColtroller = {
                             const date = new Date(search);
                             const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
                             const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-                            return new Date(event.date) >= startOfMonth && new Date(event.date) <= endOfMonth; // Date filter
+                            return new Date(event.date).getTime() >= startOfMonth.getTime() && new Date(event.date).getTime() <= endOfMonth.getTime(); // Date filter
                         }
                         case 'price': {
                             const [minPrice, maxPrice] = search.split('-').map(Number);
-                            console.log(minPrice, maxPrice ,"---------")
                             if (!isNaN(minPrice) && !isNaN(maxPrice)) {
-                                console.log(event.ticketPrice)
-                                return event.ticketPrice >= minPrice && event.ticketPrice <= maxPrice; // Price filter
+                                return event.ticketTypes.some(ticket => ticket.price >= minPrice && ticket.price <= maxPrice); // Price filter
                             }
                             return false;
                         }
                         default:
-                            console.log(`Invalid filterType: ${filterType}`); // Log invalid filterType
                             return false;
                     }
                 });
             }
     
             console.log("Filtered Events Count:", events.length); // Debugging
+            console.log("Filtered Events:", events); // Log the filtered events
     
-            // Modify image paths and return the updated events
-            const updatedEvents = events.map((event) => ({
-                ...event.toObject(),
-                images: event.images.map((imagePath) => imagePath.replace(/^.*uploads[\\/]/, 'uploads/'))
-            }));
-    
-            res.json(updatedEvents); // Send the filtered events as response
+            res.json(events); // Send the filtered events as response
         } catch (error) {
             console.error("Error in search:", error); // Log the error for debugging
             res.status(500).json({ error: error.message }); // Return error message
@@ -132,22 +231,7 @@ const eventColtroller = {
         try {
             const events = await Event.find();
             
-            // Filter and modify image paths
-            const updatedEvents = events.map(event => {
-                // If approvalStatus is "Pending", return null
-                if (event.approvalStatus === 'Pending') {
-                    return null;
-                }
-    
-                // Update image paths for approved/rejected events
-                event.images = event.images.map(imagePath =>
-                    imagePath.replace(/^.*uploads[\\/]/, 'uploads/')
-                );
-    
-                return event;
-            }).filter(event => event !== null); // Remove null values from the array
-    
-            res.json(updatedEvents);
+                res.json(events);
         } catch (error) {
             console.error("Error fetching events:", error);
             res.status(500).json({ message: 'Server error', error: error.message });
@@ -169,15 +253,15 @@ const eventColtroller = {
                 return res.status(404).json({ message: "Event not found" });
             }
 
-            // Update image paths
-            event.images = event.images.map(imagePath =>
-                imagePath.replace(/^.*uploads[\\/]/, 'uploads/')
-            );
+            // // Update image paths
+            // event.images = event.images.map(imagePath =>
+            //     imagePath.replace(/^.*uploads[\\/]/, 'uploads/')
+            // );
 
-            // Update video paths (assuming videos field exists)
-            event.videos = event.videos.map(videoPath =>
-                videoPath.replace(/^.*uploads[\\/]/, 'uploads/')
-            );
+            // // Update video paths (assuming videos field exists)
+            // event.videos = event.videos.map(videoPath =>
+            //     videoPath.replace(/^.*uploads[\\/]/, 'uploads/')
+            // );
 
             console.log(event);
             res.json(event);
@@ -192,42 +276,3 @@ const eventColtroller = {
 
 
 module.exports = eventColtroller
-
-
-// createEvent: async (req, res) => {
-//     try {
-//         console.log("Request Files:", req.files); // Logs the uploaded files
-//         console.log("Request Body:", req.body);   // Logs the other fields (non-file fields)
-
-//         const { title, description, date, time, location, ticketPrice, category, ticketType } = req.body;
-//         const userid = req.userId; 
-        
-//         const images = req.files?.images ? req.files.images.map(file => file.path) : [];
-//         const videos = req.files?.videos ? req.files.videos.map(file => file.path) : [];
-
-//         console.log("Ticket Type:", ticketType);
-
-//         const newEvent = new Event({
-//             title,
-//             description,
-//             date,
-//             time,
-//             location,
-//             ticketPrice,
-//             category,
-//             images,
-//             videos,
-//             ticketType,
-//             organizer: userid, 
-//         });
-
-//         const savedEvent = await newEvent.save();
-
-//         res.status(200).json({ message: 'Event created successfully', event: savedEvent });
-    
-//     } catch (error) {
-//         // Catch and handle any errors that occur during event creation
-//         console.error("Error creating event:", error);
-//         res.status(500).json({ message: 'Server error', error: error.message });
-//     }
-// }

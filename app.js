@@ -17,12 +17,14 @@ const app = express();
 app.use(express.json());
 app.use(cors(
     {
-        origin: ['https://guvi-event-management-project.netlify.app'],
+        // origin: ['https://guvi-event-management-project.netlify.app'],
         // origin: ['http://localhost:5173'],
+        origin: ['http://localhost:5173','https://guvi-event-management-project.netlify.app'],
         credentials: true,
         methods: ['GET', 'POST', 'PATCH', 'DELETE' ,"PUT"],
     }
 ))
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cookieParser())
 app.use(logger)
@@ -32,7 +34,7 @@ app.use("/api/v1/ticket", ticketRoutes);
 app.use('/api/v1', analyticsRoutes);
 app.use('/api/v1', ScheduleRoute);
 app.use('/api/v1/admin', adminRoutes);
-
+ 
 // app.use("/tickets");
 
 app.use(errorPage); 

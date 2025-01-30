@@ -13,12 +13,12 @@ const EventSchema = new mongoose.Schema({
         type: Date,
         required: [true, 'Event date is required'],
         validate: {
-          validator: function (value) {
-            return value >= new Date(); // Date must be in the future
-          },
-          message: 'Event date must be in the future',
+            validator: function (value) {
+                return value >= new Date(); // Date must be in the future
+            },
+            message: 'Event date must be in the future',
         },
-      },
+    },
     // date: {
     //     type: Date,
     //     required: true
@@ -42,14 +42,30 @@ const EventSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    images: {
-        type: [String],
-        required: true
-    },
-    videos: {
-        type: [String],
-        required: true
-    },
+    images: [{
+        public_id: {
+            type: String,
+            require: true
+        },
+        url: {
+            type: String,
+            require: true
+        }
+    }],
+    // images: {
+    //     type: [String],
+    //     required: true
+    // },
+    videos: [{
+        public_id: {
+            type: String,
+            require: true
+        },
+        url: {
+            type: String,
+            require: true
+        }
+    }],
     candidates: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

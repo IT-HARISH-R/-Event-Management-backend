@@ -148,7 +148,7 @@ const userController = {
     getuserbyid: async (request, response) => {
         try {
             const { userid } = request.body;
-
+            console.log("---------------------1", userid)
             // Validate userid
             if (!userid) {
                 return response.status(400).json({ message: "Invalid user ID" });
