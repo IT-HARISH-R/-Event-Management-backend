@@ -57,6 +57,7 @@ const eventColtroller = {
                 images,
                 videos,
                 organizer: userId, // Link to the organizer
+                approvalStatus:'Pending'
             });
             console.log("-----------------------------------------newevent ",newEvent)
             console.log("-----------------------------------------8")

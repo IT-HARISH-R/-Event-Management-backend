@@ -2,6 +2,7 @@ const transferredsendEmail = require('../middlewares/nodemailer');
 const Event = require('../models/eventModul');
 const SupportInquiry = require('../models/SupportInquiry'); // Import the SupportInquiry model
 const User = require("../models/userModels")
+const bcrypt = require("bcrypt");
 
 // Get all events (pending, approved, or rejected)
 exports.getAllEvents = async (req, res) => {
@@ -126,3 +127,65 @@ exports.rendReply = async (req, res) => {
     res.status(500).json({ message: 'An error occurred while processing the inquiry.', error: error.message });
   }
 }
+exports.createOrganizer = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const user = await User.findOne({ email })
+
+    if (user) {
+      return response.json({ message: "This email is already registered" })
+    }
+
+    if (!password) {
+      throw new Error('Password is required');
+    }
+
+    const passwordhash = await bcrypt.hash(password, 10)
+    console.log("Creating organizer:", { name, email, password });
+
+    const newUser = await User.create({
+      username: name,
+      email,
+      password: passwordhash,
+      role: "organizers", // Keep role consistent
+    });
+
+    console.log("New Organizer Created:", newUser);
+
+    transferredsendEmail(newUser, 'Organizer Account Created', `Hello ${newUser.username},\n\nYour organizer account has been successfully created.\n\nEmail: ${newUser.email}\nPassword: (Set by admin or reset it from the login page)\n\nLogin here: https://yourwebsite.com/login\n\nBest Regards,\nEvent Management Team`);
+    res.json({
+      status: true,
+      message: "Organizer created successfully.",
+      organizer: newUser,
+    });
+
+  } catch (error) {
+    console.error("Error creating organizer:", error);
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while creating the organizer.",
+      error: error.message,
+    });
+  }
+};
+exports.getalluser = async (req, res) => {
+  try {
+  
+
+    const user = await User.find()
+
+    console.log("New Organizer Created:", newUser);
+
+    res.json(user);
+
+  } catch (error) {
+    console.error("Error creating organizer:", error);
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while creating the organizer.",
+      error: error.message,
+    });
+  }
+}; 
+
