@@ -153,7 +153,7 @@ exports.createOrganizer = async (req, res) => {
 
     console.log("New Organizer Created:", newUser);
 
-    transferredsendEmail(newUser, 'Organizer Account Created', `Hello ${newUser.username},\n\nYour organizer account has been successfully created.\n\nEmail: ${newUser.email}\nPassword: (Set by admin or reset it from the login page)\n\nLogin here: https://yourwebsite.com/login\n\nBest Regards,\nEvent Management Team`);
+    transferredsendEmail(newUser, 'Organizer Account Created', `Hello ${newUser.username},\n\nYour organizer account has been successfully created.\n\nEmail: ${newUser.email}\nPassword: (Set by admin or reset it from the login page)\n\nLogin here: https://guvi-event-management-project.netlify.app/login \n\nBest Regards,\nEvent Management Team`);
     res.json({
       status: true,
       message: "Organizer created successfully.",
