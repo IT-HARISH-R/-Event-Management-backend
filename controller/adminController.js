@@ -148,7 +148,7 @@ exports.createOrganizer = async (req, res) => {
       username: name,
       email,
       password: passwordhash,
-      role: "organizers", // Keep role consistent
+      role: "organizers", // Keep role consistent 
     });
 
     console.log("New Organizer Created:", newUser);
