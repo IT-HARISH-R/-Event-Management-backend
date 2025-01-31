@@ -7,9 +7,9 @@ const getEventAnalytics = async (req, res) => {
     const { eventId } = req.params;
     console.log(eventId);
 
-    if (!eventId) {
-        return res.status(400).json({ message: 'Event ID is required' });
-    }
+    // if (!eventId) {
+    //     return res.status(400).json({ message: 'Event ID is required' });
+    // }
 
     try {
         // Aggregate ticket sales and revenue for the specific event
@@ -39,9 +39,9 @@ const getEventAnalytics = async (req, res) => {
             },
         ]);
 
-        if (!ticketAnalytics.length) {
-            return res.status(404).json({ message: 'No analytics found for this event' });
-        }
+        // if (!ticketAnalytics.length) {
+        //     return res.status(404).json({ message: 'No analytics found for this event' });
+        // }
 
         // Fetch event details
         const event = await Event.findById(eventId);

@@ -52,10 +52,6 @@ const EventSchema = new mongoose.Schema({
             require: true
         }
     }],
-    // images: {
-    //     type: [String],
-    //     required: true
-    // },
     videos: [{
         public_id: {
             type: String,
